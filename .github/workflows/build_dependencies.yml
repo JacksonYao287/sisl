@@ -146,4 +146,6 @@ jobs:
       with:
         files: ./coverage.xml
         disable_search: true
+        fail_ci_if_error: true
+        verbose: true
       if: ${{ inputs.testing == 'True' && inputs.tooling == 'Coverage' }}
