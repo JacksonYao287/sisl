@@ -95,6 +95,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_bounded_mpmc_queue sisl_buffer GTest::gtest)
     add_test(NAME BoundedMPMCQueue COMMAND test_bounded_mpmc_queue)
 
+    add_executable(test_lru_map)
+    target_sources(test_lru_map PRIVATE
+      tests/test_lru_map.cpp
+      )
+    target_link_libraries(test_lru_map sisl_buffer GTest::gtest)
+    add_test(NAME LruMap COMMAND test_lru_map)
 
     if (DEFINED MALLOC_IMPL)
       if (${MALLOC_IMPL} STREQUAL "jemalloc")
