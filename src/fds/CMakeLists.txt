@@ -94,6 +94,8 @@ if(BUILD_TESTING)
       )
     target_link_libraries(test_bounded_mpmc_queue sisl_buffer GTest::gtest)
     add_test(NAME BoundedMPMCQueue COMMAND test_bounded_mpmc_queue)
+    set_tests_properties(BoundedMPMCQueue PROPERTIES
+        ENVIRONMENT "TSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tsan.supp")
 
     add_executable(test_lru_map)
     target_sources(test_lru_map PRIVATE

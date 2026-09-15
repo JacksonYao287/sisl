@@ -75,8 +75,17 @@ public:
 
     /**
      * @brief Destructor - automatically closes the queue
+     *
+     * @note Blocks until every thread currently blocked in pop() has woken up and returned from
+     * std::condition_variable::wait(). Destroying mutex_/cv_ while a thread is still inside wait() is undefined
+     * behavior even after notify_all() has been called, since the woken thread may still be re-acquiring the
+     * lock internally.
      */
-    ~MPMCPriorityQueue() { close(); }
+    ~MPMCPriorityQueue() {
+        close();
+        std::unique_lock lock(mutex_);
+        no_waiters_cv_.wait(lock, [this] { return waiters_ == 0; });
+    }
 
     // Disable copy and move to prevent issues with condition variables
     MPMCPriorityQueue(const MPMCPriorityQueue&) = delete;
@@ -133,7 +142,9 @@ public:
         std::unique_lock lock(mutex_);
 
         // Wait until queue has elements or is closed
+        ++waiters_;
         cv_.wait(lock, [this] { return closed_ || !pq_.empty(); });
+        if (--waiters_ == 0) { no_waiters_cv_.notify_all(); }
 
         // Try to pop an element
         if (!pq_.empty()) {
@@ -213,6 +224,8 @@ public:
 private:
     mutable std::mutex mutex_;
     std::condition_variable cv_;
+    std::condition_variable no_waiters_cv_;
+    size_type waiters_{0};
     bool closed_{false};
     std::priority_queue< T, std::vector< T >, Compare > pq_;
 };
